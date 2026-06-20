@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudAttend – Attendance Management System</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts: Inter for body, Space Grotesk for headings -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       NOTIFICATION TOAST
+  ════════════════════════════════════════════ -->
+  <div id="toast" class="toast" role="alert" aria-live="polite">
+    <span id="toast-icon"></span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-brand">
+      <!-- Cloud icon inline SVG so it works without network -->
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+      </svg>
+      <span class="brand-name">CloudAttend</span>
+    </div>
+
+    <div class="header-actions">
+      <!-- Dark / Light toggle -->
+      <button id="theme-toggle" class="icon-btn" aria-label="Toggle dark mode" title="Toggle dark/light mode">
+        <i data-lucide="moon" id="theme-icon"></i>
+      </button>
+      <!-- Export CSV -->
+      <button id="export-btn" class="btn btn-outline" aria-label="Export to CSV">
+        <i data-lucide="download"></i>
+        <span>Export CSV</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN LAYOUT
+  ════════════════════════════════════════════ -->
+  <main class="main-layout">
+
+    <!-- ── LEFT PANEL: form + stats ── -->
+    <aside class="left-panel">
+
+      <!-- Statistics cards -->
+      <section class="stats-grid" aria-label="Attendance statistics">
+        <div class="stat-card stat-total">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Total Records</span>
+        </div>
+        <div class="stat-card stat-present">
+          <span class="stat-value" id="stat-present">0</span>
+          <span class="stat-label">Present</span>
+        </div>
+        <div class="stat-card stat-absent">
+          <span class="stat-value" id="stat-absent">0</span>
+          <span class="stat-label">Absent</span>
+        </div>
+        <div class="stat-card stat-percent">
+          <span class="stat-value" id="stat-percent">0%</span>
+          <span class="stat-label">Attendance %</span>
+        </div>
+      </section>
+
+      <!-- Attendance entry form -->
+      <section class="form-card" aria-label="Add attendance record">
+        <h2 class="form-title">
+          <i data-lucide="user-plus"></i>
+          Mark Attendance
+        </h2>
+
+        <div class="form-group">
+          <label for="student-name">Student Name <span class="required">*</span></label>
+          <input type="text" id="student-name" placeholder="e.g. Kavish Sharma"
+                 autocomplete="off" maxlength="60" />
+        </div>
+
+        <div class="form-group">
+          <label for="roll-number">Roll Number <span class="required">*</span></label>
+          <input type="text" id="roll-number" placeholder="e.g. CE2024001"
+                 autocomplete="off" maxlength="20" />
+        </div>
+
+        <div class="form-group">
+          <label for="date">Date <span class="required">*</span></label>
+          <input type="date" id="date" />
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status <span class="required">*</span></label>
+          <select id="status">
+            <option value="Present">✅ Present</option>
+            <option value="Absent">❌ Absent</option>
+          </select>
+        </div>
+
+        <!-- Hidden field – holds ID of record being edited -->
+        <input type="hidden" id="edit-id" value="" />
+
+        <div class="form-actions">
+          <button id="add-btn" class="btn btn-primary" aria-label="Add attendance record">
+            <i data-lucide="plus-circle"></i>
+            <span id="add-btn-label">Add Attendance</span>
+          </button>
+          <button id="cancel-edit-btn" class="btn btn-ghost hidden" aria-label="Cancel edit">
+            <i data-lucide="x"></i>
+            Cancel
+          </button>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ── RIGHT PANEL: search + table ── -->
+    <section class="right-panel">
+
+      <!-- Toolbar -->
+      <div class="table-toolbar">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon" aria-hidden="true"></i>
+          <input type="search" id="search-input" placeholder="Search by name, roll no, or date…"
+                 aria-label="Search attendance records" />
+        </div>
+        <button id="clear-all-btn" class="btn btn-danger" aria-label="Clear all records">
+          <i data-lucide="trash-2"></i>
+          <span>Clear All</span>
+        </button>
+      </div>
+
+      <!-- Records table -->
+      <div class="table-wrap" role="region" aria-label="Attendance records table">
+        <table id="attendance-table" aria-live="polite">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Student Name</th>
+              <th scope="col">Roll Number</th>
+              <th scope="col">Date</th>
+              <th scope="col">Status</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Rows injected by script.js -->
+          </tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="empty-state hidden" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               aria-hidden="true" class="empty-icon">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <line x1="9" y1="12" x2="15" y2="12"/>
+            <line x1="9" y1="16" x2="12" y2="16"/>
+          </svg>
+          <p class="empty-heading">No records found</p>
+          <p class="empty-sub">Add an attendance entry using the form on the left.</p>
+        </div>
+      </div>
+
+      <!-- Record count -->
+      <p class="record-count" id="record-count" aria-live="polite"></p>
+
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════ -->
+  <footer class="footer">
+    <span>CloudAttend &copy; 2025 &mdash; Hosted on <strong>Azure Static Web Apps</strong></span>
+    <span class="footer-sub">Data stored in Browser Local Storage</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
